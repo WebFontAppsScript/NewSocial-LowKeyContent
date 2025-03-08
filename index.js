@@ -1,5 +1,6 @@
 const express = require('express');
 const axios = require('axios');
+const path = require('path'); 
 
 const app = express();
 
@@ -8,36 +9,30 @@ app.get('/', (req, res) => {
 });
 
 app.get('/nos', async (req, res) => {
-  
   const xmlUrl = req.query.ifr;
   if (!xmlUrl) {
     return res.status(400).send('Missing "ifr" query parameter');
   }
-  
+
   try {
-    
     const response = await axios.get(xmlUrl);
     let xmlData = response.data;
-    
-    
+
     const xmlDeclarationRegex = /<\?xml.*?\?>/;
     if (xmlDeclarationRegex.test(xmlData)) {
       xmlData = xmlData.replace(xmlDeclarationRegex, match => 
         `${match}\n<?xml-stylesheet type="text/xsl" href="/xsl"?>`
       );
     } else {
-      
       xmlData = '<?xml-stylesheet type="text/xsl" href="/xsl"?>\n' + xmlData;
     }
-    
-    
+
     res.set('Content-Type', 'text/xml');
     res.send(xmlData);
   } catch (error) {
     res.status(500).send('Error fetching XML: ' + error.message);
   }
 });
-
 
 app.get('/xsl', (req, res) => {
   const xsltContent = `<?xml version="1.0" encoding="UTF-8"?>
@@ -69,7 +64,6 @@ app.get('/xsl', (req, res) => {
   res.type('text/xsl');
   res.send(xsltContent);
 });
-
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
